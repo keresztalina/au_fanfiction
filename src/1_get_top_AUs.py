@@ -60,28 +60,64 @@ def plot_most_common(counts: pd.DataFrame, # with item counts
     plt.gca().invert_yaxis()
     plt.savefig('plots/top_20_au.png', format='png', bbox_inches='tight') # save entire plot
 
+def aggregate_by_year(df: pd.DataFrame, 
+                    colname: str):
+
+    aggr = df[[colname]].copy()
+    aggr[colname] = pd.to_datetime(aggr[colname])
+    aggr['year'] = aggr[colname].dt.year.astype(int)
+    by_year = aggr.groupby('year').size()
+    
+    return by_year
+
+def plot_over_time(by_year: pd.DataFrame):
+
+    plt.figure(figsize=(10, 6))
+    plt.bar(by_year.index, by_year.values, color='skyblue')
+    plt.xlabel('Year')
+    plt.ylabel('Number of AU fics')
+    plt.title('Number of AU fics posted to AO3 by year')
+    plt.xticks(rotation=45)
+    plt.gca().xaxis.set_major_locator(MultipleLocator(1)) # so plt doesn't get creative with x axis
+    plt.savefig('plots/au_by_year.png', format='png', bbox_inches='tight') # save entire plot
+
 
 # MAIN
 def main():
 
     # load data
+    print('Loading data...')
     folder_path = 'metadata_all/test_folder'
     meta = load_data(folder_path)
+    print('Data loaded!')
 
     # drop any duplicates from scraping error
+    print('Dropping duplicates...')
     meta = meta.drop_duplicates(subset=['work_id'])
+    print('Duplicates dropped!')
 
     # split tag field into list of tags, find only AU-related ones
+    print('Counting AU-related tags...')
     meta['additional tags'] = string_to_list(meta['additional tags'])
     meta['au tags'] = meta['additional tags'].apply(filter_list)
-
+    
     # get AU counts and plot most common types
     au_counts = list_counter(meta['au tags'])
     plot_most_common(au_counts, 20, 'Tag', 'Most popular AUs', 'skyblue', 5)
+    print('Counted AU-related tags!')
+
+    # number of AU fics by year
+    print('Aggregating number of posted fics by year...')
+    yearly = aggregate_by_year(meta, 'status date') # by last time updated; for time posted use 'published'
+    plot_over_time(yearly)
+    print('Yearly AU fic count aggregated!')
 
     # save data in case it needs to be loaded later
+    print('Saving data...')
     meta.to_pickle('obj/meta.pkl')
     au_counts.to_csv('obj/au_counts.csv', index=False)
+    yearly.to_csv('obj/yearly.csv', index=False)
+    print('Data saved!')
 
 if __name__ == "__main__":
     main()
