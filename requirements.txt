@@ -8,3 +8,6 @@ argparse
 lxml
 matplotlib
 seaborn
+spacy
+textdescriptives
+tqdm
