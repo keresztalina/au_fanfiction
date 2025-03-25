@@ -11,3 +11,7 @@ seaborn
 spacy
 textdescriptives
 tqdm
+scikit-learn
+turftopic
+sentence-transformers
+topic-wizard
