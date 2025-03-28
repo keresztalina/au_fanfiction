@@ -13,7 +13,7 @@ textdescriptives
 tqdm
 scikit-learn
 turftopic
-"sentence-transformers[onnx,onnx-gpu]"
+sentence-transformers[onnx,onnx-gpu]
 topic-wizard
 torch
 transformers
