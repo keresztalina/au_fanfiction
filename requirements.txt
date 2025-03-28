@@ -13,5 +13,8 @@ textdescriptives
 tqdm
 scikit-learn
 turftopic
-sentence-transformers
+"sentence-transformers[onnx,onnx-gpu]"
 topic-wizard
+torch
+transformers
+nltk
