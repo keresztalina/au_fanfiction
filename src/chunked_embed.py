@@ -1,12 +1,14 @@
-import pandas as pd
-import numpy as np
 import os
+import pandas as pd 
+import numpy as np
+from tqdm import tqdm
 from sentence_transformers import SentenceTransformer
+from itertools import islice
 
 def split_text_with_id(text, chunk_size=350):
     words = text.split()
-    chunks = [" ".join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
-    return [(idx, chunk) for idx, chunk in enumerate(chunks)]
+    return ((i, " ".join(chunk)) for i, chunk in enumerate(
+        (islice(words, i, i + chunk_size) for i in range(0, len(words), chunk_size))))
 
 def main():
 
@@ -20,7 +22,7 @@ def main():
 
     # get chunks of length suitable for transformer processing
     rows = []
-    for _, row in df.iterrows():
+    for _, row in tqdm(df.iterrows(), total=len(df), desc="Chunking text"):
         chunks = split_text_with_id(row['body'])
         rows.extend({
             'work_id': row['work_id'], 
@@ -31,6 +33,9 @@ def main():
     df_chunked = pd.DataFrame(rows)
     df_chunked.to_pickle(pickle_path)
 
+    # get corpus
+    corpus = df_chunked['body'].tolist()
+
     # load embedding model
     model = SentenceTransformer("paraphrase-mpnet-base-v2")
 
@@ -39,7 +44,7 @@ def main():
 
     # generate embeddings
     embeddings = model.encode_multi_process(
-        test_corpus, 
+        corpus, 
         pool=pool, 
         show_progress_bar=True)
 
