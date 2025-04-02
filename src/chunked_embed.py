@@ -1,77 +1,50 @@
 import pandas as pd
 import numpy as np
 import os
-import re
-import spacy
-from tqdm import tqdm
-#from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer
+
+def split_text_with_id(text, chunk_size=350):
+    words = text.split()
+    chunks = [" ".join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
+    return [(idx, chunk) for idx, chunk in enumerate(chunks)]
 
 def main():
 
-    nlp = spacy.load("en_core_web_sm")
-
-    def segment_sentences(text):
-        # Replace newlines with spaces (to avoid breaking sentences across lines)
-        text = text.replace('\n', ' ')
-        
-        # Regex to match sentence boundaries (periods, exclamation marks, question marks)
-        sentence_endings = r'(?<=[.!?]) +'
-        sentences = re.split(sentence_endings, text)
-        
-        # Remove empty sentences (if any) and strip leading/trailing whitespace
-        sentences = [sentence.strip() for sentence in sentences if sentence.strip()]
-        
-        return sentences
-
-    def chunk_text(text, max_words=500):
-        doc = nlp.make_doc(text) 
-        nlp.max_length = float('inf')
-
-        sentences = segment_sentences(text)
-        chunks = []
-        current_chunk = []
-        current_word_count = 0
-
-        for sentence in sentences:
-                word_count = len(sentence.split()) 
-
-                if current_word_count + word_count > max_words:
-                    chunks.append(" ".join(current_chunk).strip()) 
-                    current_chunk = [] 
-                    current_word_count = 0
-
-                current_chunk.append(sentence) 
-                current_word_count += word_count 
-
-        if current_chunk: 
-            chunks.append(" ".join(current_chunk))
-
-        return chunks
-
-    def process_and_write_chunks(input_df, output_file):
-        with open(output_file, mode='w', encoding='utf-8') as f:
-            # Set up the CSV writer
-            f.write("work_id,body\n")
-            
-            # Use tqdm to show progress over rows of the dataframe
-            for _, row in tqdm(input_df.iterrows(), total=input_df.shape[0], desc="Processing Rows"):
-                # Get the chunks for each text
-                chunks = chunk_text(row['body'], max_words=500)
-                # Write each chunk as a new row in the CSV file
-                for chunk in chunks:
-                    f.write(f"{row['work_id']},{chunk}\n")
+    # paths
     data_path = os.path.join("obj", "prepped_data.pkl")
-    output_path = os.path.join("obj", "chunked_data.csv")
-    #embeddings_path = os.path.join("obj", "chunked_embeddings.npy")
-    
+    pickle_path = os.path.join("obj", "df_chunked.pkl")
+    embeddings_path = os.path.join("obj", "embeddings.npy")
+
+    # read data
     df = pd.read_pickle(data_path)
-    nlp = spacy.load("en_core_web_sm")
 
-    process_and_write_chunks(df, output_path)
+    # get chunks of length suitable for transformer processing
+    rows = []
+    for _, row in df.iterrows():
+        chunks = split_text_with_id(row['body'])
+        rows.extend({
+            'work_id': row['work_id'], 
+            'chunk_id': chunk_id, 
+            'body': chunk} for chunk_id, chunk in chunks)
+    
+    # get chunked df and pickle
+    df_chunked = pd.DataFrame(rows)
+    df_chunked.to_pickle(pickle_path)
 
-    #model = SentenceTransformer("paraphrase-mpnet-base-v2")
-    #chunked_embeddings = model.encode(chunked_corpus, batch_size=256, show_progress_bar=True, convert_to_numpy=True)
-    #np.save(embeddings_path, chunked_embeddings)
+    # load embedding model
+    model = SentenceTransformer("paraphrase-mpnet-base-v2")
+
+    # set up parallelization
+    pool = model.start_multi_process_pool()
+
+    # generate embeddings
+    embeddings = model.encode_multi_process(
+        test_corpus, 
+        pool=pool, 
+        show_progress_bar=True)
+
+    # save embeddings
+    np.save(embeddings_path, embeddings)
     
 if __name__ == "__main__":
     main()
