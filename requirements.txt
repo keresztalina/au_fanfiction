@@ -6,12 +6,13 @@ numpy
 #datetime
 #argparse
 #lxml
-#matplotlib
-#seaborn
-spacy
+matplotlib
+seaborn
+#spacy
 #textdescriptives
 tqdm
-#scikit-learn
+scikit-learn
 #turftopic
 #sentence-transformers
 #topic-wizard
+xgboost
