@@ -124,7 +124,7 @@ def main():
             5, 'f1_macro', -1, 
             class_labels, models, target)
         
-        with open(os.path.join(textfiles, f"test_{target}.txt"), 'w') as f:
+        with open(os.path.join(textfiles, f"best_models_{target}.txt"), 'w') as f:
             # Write the classification report dictionary to the file
             f.write(f"LR best params: {lr_best}\n")
             f.write(str(lr_cr) + "\n")
