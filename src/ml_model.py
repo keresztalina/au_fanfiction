@@ -126,6 +126,9 @@ def main():
         
         with open(os.path.join(textfiles, f"best_models_{target}.txt"), 'w') as f:
             # Write the classification report dictionary to the file
+            f.write(f"Dummy best params: 'most_frequent'\n")
+            f.write(str(d_cr) + "\n")
+            f.write("\n")
             f.write(f"LR best params: {lr_best}\n")
             f.write(str(lr_cr) + "\n")
             f.write("\n")
