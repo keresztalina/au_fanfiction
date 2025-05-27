@@ -5,13 +5,31 @@ import pickle
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from turftopic import KeyNMF
+from scipy.special import softmax
+from scipy.stats import entropy
 from sklearn.mixture import GaussianMixture
 from sklearn.metrics import adjusted_mutual_info_score
 
 def prepare_topic_df(model, 
                      chunked_df: pd.DataFrame, 
-                     metadata_df: pd.DataFrame) -> pd.DataFrame:
-    """Prepare a work-level topic dataframe from a chunk-level model."""
+                     metadata_df: pd.DataFrame,
+                     norm_mode: str = 'l1') -> pd.DataFrame:
+    """Prepare a work-level topic dataframe from a chunk-level model.
+
+    Parameters:
+        model: Trained topic model with a .document_topic_matrix and .topic_names.
+        chunked_df: DataFrame with 'work_id' and 'chunk_id' columns.
+        metadata_df: DataFrame with metadata to merge on 'work_id'.
+        norm_mode: Either 'l1' for row-sum normalization, or 'softmax' for softmax scaling.
+
+    Returns:
+        A DataFrame with topic proportions per work and metadata merged.
+    """
+    # Check if input is valid
+    valid_modes = {'l1', 'softmax'}
+    if norm_mode not in valid_modes:
+        raise ValueError(f"Invalid norm_mode '{norm_mode}'. Choose from: {valid_modes}")
+
     # Topic coefficients
     topics = pd.DataFrame(model.document_topic_matrix, columns=model.topic_names)
 
@@ -21,10 +39,17 @@ def prepare_topic_df(model,
 
     # Aggregate over chunks per work
     df = df.drop(columns='chunk_id').groupby('work_id').sum()
-    df = df.div(df.sum(axis=1), axis=0).reset_index()
+
+    # Normalize per work
+    if norm_mode == 'l1':
+        df = df.div(df.sum(axis=1), axis=0)
+    elif norm_mode == 'softmax':
+        df = pd.DataFrame(softmax(df.values, axis=1), 
+                          index=df.index, 
+                          columns=df.columns)
 
     # Merge with metadata
-    df = df.merge(metadata_df, on='work_id')
+    df = df.reset_index().merge(metadata_df, on='work_id')
     return df
 
 
@@ -64,12 +89,13 @@ def cluster(topic_df: pd.DataFrame,
 def plot_cluster(topic_df: pd.DataFrame, 
                  cluster_col: str, 
                  category_col: str, 
-                 output_path: str):
+                 output_path: str,
+                 colormap: str):
     """Plot the distribution of a category (e.g., Fandom or AU) across clusters."""
     cluster_counts = topic_df.groupby([cluster_col, category_col]).size().unstack().fillna(0)
     cluster_props = cluster_counts.div(cluster_counts.sum(axis=1), axis=0)
 
-    ax = cluster_props.plot(kind='bar', stacked=True, figsize=(12, 6), colormap='Set1')
+    ax = cluster_props.plot(kind='bar', stacked=True, figsize=(12, 6), colormap=colormap)
     plt.title(f'{category_col} composition of each GMM cluster')
     plt.xlabel('GMM Cluster')
     plt.ylabel('Proportion')
@@ -84,17 +110,27 @@ def plot_cluster(topic_df: pd.DataFrame,
 def run_clustering_pipeline(model, 
                             chunked_df: pd.DataFrame, 
                             metadata_df: pd.DataFrame,
+                            norm_mode: str,
                             cluster_counts: list[int], 
-                            type: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+                            type: str,
+                            out: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Full clustering pipeline from model and metadata to results."""
-    df = prepare_topic_df(model, chunked_df, metadata_df)
+    df = prepare_topic_df(model, chunked_df, metadata_df, norm_mode=norm_mode)
     topic_cols = df.iloc[:, 1:51]  # assumes first col is work_id, next 50 are topic scores
+    
+    entropies = df.iloc[:, 1:51].apply(entropy, axis=1)
+    ent_summary = entropies.describe()
 
     df, gmm_output = cluster(df, topic_cols, cluster_counts)
 
-    for category in ['Fandom', 'AU']:
-        cluster_col = df.columns[-1]  # last column is the best cluster label
-        output_path = f"{type}_{category}_composition.png"
-        plot_cluster(df, cluster_col, category, output_path)
+    colormapping = {
+        'Fandom': 'Set1',
+        'AU': 'Set2'
+    }
 
-    return df, gmm_output
+    for category, color in colormapping.items():
+        cluster_col = df.columns[-1]  # last column is the best cluster label
+        output_path = os.path.join(out, f"{type}_{category}_{norm_mode}_composition.png")
+        plot_cluster(df, cluster_col, category, output_path, color)
+
+    return df, gmm_output, ent_summary

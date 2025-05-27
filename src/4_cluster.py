@@ -1,20 +1,27 @@
-import pickle
-from clustering import run_clustering_pipeline
+import os
+import joblib
+from utils.clustering import run_clustering_pipeline
 
 def main():
 
-    with open("df_chunked.pkl", "rb") as f:
-        chunked_df = pickle.load(f)
-    with open("prepped_data.pkl", "rb") as f:
-        metadata_df = pickle.load(f)
+    chunked_df = joblib.load(os.path.join("obj", "data", "df_chunked.pkl"))
+    metadata_df = joblib.load(os.path.join("obj", "data", "prepped_data.pkl"))
+    plot_path = os.path.join("obj", "plots")
 
     for i in ['NEi', 'NEe']:
-        print(f"Running clustering for type: {i}")
-        with open(f"{i}_50_15.pkl", "rb") as f:
-            m = pickle.load(f)
-        df, gmm_results = run_clustering_pipeline(
-            m, chunked_df, metadata_df,
-            cluster_counts=[10, 20, 30], type=i)
+        m = joblib.load(os.path.join("obj", "topic_models", f"{i}_50_15.pkl"))
 
-        df.to_pickle(f"{i}_final.pkl")
-        gmm_results.to_csv(f"gmm_output_{i}.csv", index=False)
+        for j in ['l1', 'softmax']:
+            print(f"Running clustering for type {i} with normalization {j}")
+
+            df, gmm_results, entropies = run_clustering_pipeline(
+                m, chunked_df, metadata_df, j,
+                cluster_counts=[10, 20, 50, 100], type=i, out=plot_path)
+
+            df.to_pickle(os.path.join("obj", "data", f"{i}_{j}_final.pkl"))
+            gmm_results.to_csv(os.path.join("obj", "text_files", f"gmm_output_{i}_{j}.csv"), index = False)
+            entropies.to_csv(os.path.join("obj", "text_files", f"entropies_{i}_{j}.csv"), header=True)
+
+
+if __name__ == "__main__":
+    main()
