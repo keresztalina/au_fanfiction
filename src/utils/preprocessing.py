@@ -5,6 +5,7 @@ import numpy as np
 import spacy
 import textdescriptives as td
 from tqdm import tqdm
+from itertools import islice
 
 spacy.load("en_core_web_lg")
 
@@ -194,3 +195,9 @@ def get_quality_checked_snippets(df):
     )
     df['passed_qual_check'] = list(metrics['passed_quality_check'])
     return df
+
+
+def split_text_with_id(text, chunk_size=350):
+    words = text.split()
+    return ((i, " ".join(chunk)) for i, chunk in enumerate(
+        (islice(words, i, i + chunk_size) for i in range(0, len(words), chunk_size)))) 
