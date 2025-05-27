@@ -9,6 +9,7 @@ def main():
         metadata_df = pickle.load(f)
 
     for i in ['NEi', 'NEe']:
+        print(f"Running clustering for type: {i}")
         with open(f"{i}_50_15.pkl", "rb") as f:
             m = pickle.load(f)
         df, gmm_results = run_clustering_pipeline(
