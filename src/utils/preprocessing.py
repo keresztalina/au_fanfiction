@@ -163,6 +163,7 @@ def str_to_date(data, cols):
     for col in cols:
         data[col] = pd.to_datetime(data[col], errors='coerce')
     return data
+    
 
 def get_quality_checked_snippets(df):
     """
@@ -198,6 +199,17 @@ def get_quality_checked_snippets(df):
 
 
 def split_text_with_id(text, chunk_size=350):
+    """
+    Splits a text into word chunks of a specified size and assigns an index to each chunk.
+
+    Parameters:
+        text (str): The input text to split.
+        chunk_size (int, optional): The number of words per chunk. Defaults to 350.
+
+    Returns:
+        generator of (int, str): A generator yielding tuples of the form (chunk_id, chunk_text), 
+                                 where `chunk_id` is the index of the chunk and `chunk_text` is the chunked string.
+    """
     words = text.split()
     return ((i, " ".join(chunk)) for i, chunk in enumerate(
         (islice(words, i, i + chunk_size) for i in range(0, len(words), chunk_size)))) 
