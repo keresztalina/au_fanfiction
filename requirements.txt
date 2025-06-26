@@ -8,7 +8,7 @@ numpy
 #lxml
 matplotlib
 seaborn
-#spacy
+spacy
 #textdescriptives
 tqdm
 scikit-learn

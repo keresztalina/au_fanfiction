@@ -9,7 +9,7 @@ def main():
     plot_path = os.path.join("obj", "plots")
 
     for i in ['NEi', 'NEe']:
-        m = joblib.load(os.path.join("obj", "topic_models", f"{i}_50_15.pkl"))
+        m = joblib.load(os.path.join("obj", "topic_models", f"{i}_50.pkl"))
 
         for j in ['l1', 'softmax']:
             print(f"Running clustering for type {i} with normalization {j}")

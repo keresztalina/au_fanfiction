@@ -90,7 +90,7 @@ def split_and_save(X, y_encoded, test_size, output_folder, y_colname, stratify=F
     
     return X_train, X_test, y_train, y_test
 
-def run_eval_model(model, model_name, X_train, X_test, y_train, y_test, param_grid, cv, scoring, n_jobs, classes, models_folder, y_colname):
+def run_eval_model(model, model_name, X_train, X_test, y_train, y_test, param_grid, cv, scoring, n_jobs, classes, models_folder, y_colname, norm):
 
     # prep for progress bar
     n_total = len(ParameterGrid(param_grid)) * cv
@@ -104,7 +104,7 @@ def run_eval_model(model, model_name, X_train, X_test, y_train, y_test, param_gr
     )
 
     # run gridsearch
-    with tqdm(total=n_total, desc=f"GridSearchCV for {y_colname} w/ model {model_name}") as progress_bar:
+    with tqdm(total=n_total, desc=f"GridSearchCV for {norm}-normalized {y_colname} w/ model {model_name}") as progress_bar:
         with TqdmJoblib(progress_bar):
             grid.fit(X_train, y_train)
 
@@ -117,6 +117,6 @@ def run_eval_model(model, model_name, X_train, X_test, y_train, y_test, param_gr
         output_dict=True)
     
     # save model
-    joblib.dump(grid.best_estimator_, os.path.join(models_folder, f"{model_name}_{y_colname}.pkl"))
+    joblib.dump(grid.best_estimator_, os.path.join(models_folder, f"{model_name}_{y_colname}_{norm}.pkl"))
 
     return best_params, classification_rep
