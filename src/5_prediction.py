@@ -67,7 +67,7 @@ def main():
         eval_metric='mlogloss',
         random_state=42)
 
-    for n in ['l1']: #, 'softmax'
+    for n in ['l1', 'softmax']: 
         data_path = os.path.join(dfs, f"NEe_{n}_final.pkl")
         with open(data_path, "rb") as f:
             df = pickle.load(f)
@@ -81,7 +81,7 @@ def main():
         for target in ["AU", "Fandom"]:
 
             # get class distribution
-            distr_path = os.path.join(plots, f"{target}_{n}_distr.png")
+            distr_path = os.path.join(plots, f"{target}_distr.png")
             plot_distribution(df, target, distr_path)
 
             # select y
@@ -91,7 +91,7 @@ def main():
             label_encoder = LabelEncoder()
             y_encoded = label_encoder.fit_transform(y)
             class_labels = label_encoder.classes_
-            joblib.dump(class_labels, os.path.join(model_extras, f"class_labels_{target}_{n}.pkl"))
+            joblib.dump(class_labels, os.path.join(model_extras, f"class_labels_{target}.pkl"))
         
             # split data and save for future analysis
             X_train, X_test, y_train, y_test = split_and_save(X, y_encoded, 0.2, model_extras, target, stratify=True)
@@ -126,7 +126,6 @@ def main():
                 class_labels, models, target, n)
             
             with open(os.path.join(textfiles, f"best_models_{target}_{n}.txt"), 'w') as f:
-                # Write the classification report dictionary to the file
                 f.write(f"Dummy best params: 'most_frequent'\n")
                 f.write(str(d_cr) + "\n")
                 f.write("\n")
