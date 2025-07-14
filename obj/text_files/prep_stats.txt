@@ -1,0 +1,5 @@
+Original number of fics: 28422
+After removing crossovers: 26957
+After removing removing duplicates: 26434
+After removing fics of insufficient length: 25053
+After removing fics of insufficient quality: 24869

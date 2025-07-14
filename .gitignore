@@ -1,2 +1,6 @@
-obj/
-in/
+obj/data
+obj/embeddings
+obj/model_extras
+obj/models 
+obj/texts
+obj/topic_models
