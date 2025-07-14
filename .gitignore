@@ -4,3 +4,4 @@ obj/model_extras
 obj/models 
 obj/texts
 obj/topic_models
+venv/
