@@ -21,6 +21,7 @@ from sklearn.metrics import classification_report
 from utils.modeling import plot_distribution, plot_correlation, split_and_save, run_eval_model
 
 def main():
+    #paths
     dfs = os.path.join("obj", "data")
     plots = os.path.join("obj", "plots")
     model_extras = os.path.join("obj", "model_extras")
@@ -94,7 +95,7 @@ def main():
             joblib.dump(class_labels, os.path.join(model_extras, f"class_labels_{target}.pkl"))
         
             # split data and save for future analysis
-            X_train, X_test, y_train, y_test = split_and_save(X, y_encoded, 0.2, model_extras, target, stratify=True)
+            X_train, X_test, y_train, y_test = split_and_save(X, y_encoded, 0.2, model_extras, target, n, stratify=True)
 
             # dummy classifier to set baseline
             dummy_clf = DummyClassifier(strategy="most_frequent")

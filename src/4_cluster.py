@@ -4,6 +4,7 @@ from utils.clustering import run_clustering_pipeline
 
 def main():
 
+    # paths
     chunked_df = joblib.load(os.path.join("obj", "data", "df_chunked.pkl"))
     metadata_df = joblib.load(os.path.join("obj", "data", "prepped_data.pkl"))
     plot_path = os.path.join("obj", "plots")
