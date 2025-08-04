@@ -12,3 +12,5 @@ textdescriptives==2.8.4
 tqdm==4.67.1
 turftopic==0.17.3
 xgboost==3.0.2
+topic-wizard==1.1.4
+kaleido==1.0.0
