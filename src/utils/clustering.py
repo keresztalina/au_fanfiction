@@ -90,18 +90,18 @@ def plot_cluster(topic_df: pd.DataFrame,
                  cluster_col: str, 
                  category_col: str, 
                  output_path: str,
-                 colormap: str):
+                 type: str):
     """Plot the distribution of a category (e.g., Fandom or AU) across clusters."""
     cluster_counts = topic_df.groupby([cluster_col, category_col]).size().unstack().fillna(0)
     cluster_props = cluster_counts.div(cluster_counts.sum(axis=1), axis=0)
 
-    ax = cluster_props.plot(kind='bar', stacked=True, figsize=(12, 6), colormap=colormap)
-    plt.title(f'{category_col} composition of each GMM cluster')
+    dominant_props = cluster_props.max(axis=1)
+
+    ax = dominant_props.plot(kind='bar', figsize=(12, 6), color='seagreen')
+    plt.title(f'Most popular {category_col} proportion in each GMM cluster ({type})')
     plt.xlabel('GMM Cluster')
     plt.ylabel('Proportion')
 
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles[::-1], labels[::-1], bbox_to_anchor=(1.05, 1))
     plt.tight_layout()
     plt.savefig(output_path, bbox_inches='tight')
     plt.close()
@@ -123,14 +123,9 @@ def run_clustering_pipeline(model,
 
     df, gmm_output = cluster(df, topic_cols, cluster_counts)
 
-    colormapping = {
-        'Fandom': 'Set1',
-        'AU': 'Set2'
-    }
-
-    for category, color in colormapping.items():
+    for category in ['AU', 'Fandom']:
         cluster_col = df.columns[-1]  # last column is the best cluster label
         output_path = os.path.join(out, f"{type}_{category}_{norm_mode}_composition.png")
-        plot_cluster(df, cluster_col, category, output_path, color)
+        plot_cluster(df, cluster_col, category, output_path, type)
 
     return df, gmm_output, ent_summary

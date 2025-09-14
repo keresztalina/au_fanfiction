@@ -9,6 +9,7 @@ def main():
     model_extras = os.path.join("obj", "model_extras")
     models = os.path.join("obj", "models")
     plots = os.path.join("obj", "plots")
+    df = joblib.load(os.path.join("obj", "data", "NEe_l1_final.pkl"))
 
     # define pairs for future plotting
     au_pairs = {
